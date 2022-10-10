@@ -10,6 +10,7 @@
 #include <termios.h> //Contiene la terminal POSIX 
 #include <unistd.h> // write(), read(), close()
 
+unsigned short flag = 0;
 
 
 typedef struct players{//Pos inferior izquierda de la nave
@@ -44,6 +45,20 @@ escombro old_debris[14];
 char info[9];
 
 unsigned short score[]={0,0};
+
+void init();
+void gen_debris();
+void port_game(unsigned short c, unsigned short mode);
+void move_player(unsigned short i, unsigned short direction);
+void draw_player(unsigned short x, unsigned short y, unsigned short color);
+int mapping(int y);
+void move_ia();
+
+unsigned short turno= 0;
+unsigned short debris_turn = 0;
+unsigned short turn2 = 0;
+
+
 
 int main(){
 	
@@ -183,6 +198,7 @@ void init(){
 }
 
 void gen_debris(){
+	
 	unsigned short j = 0;
 	unsigned short posY = mapping(1)+1;
 	for(j = 0; j < 15; j++){
@@ -192,6 +208,22 @@ void gen_debris(){
 			debris[j].x = posX;
 			posY += 3;
 	}
+}
+
+void init_win_params(WIN *p_win){
+    p_win->height = 33;
+    p_win->width = 129;
+    p_win->starty = 0;  
+    p_win->startx = 0;
+
+    p_win->border.ls = '|';
+    p_win->border.rs = '|';
+    p_win->border.ts = '-';
+    p_win->border.bs = '-';
+    p_win->border.tl = '+';
+    p_win->border.tr = '+';
+    p_win->border.bl = '+';
+    p_win->border.br = '+';
 }
 
 void port_game(unsigned short c, unsigned short mode){
