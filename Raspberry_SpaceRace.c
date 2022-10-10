@@ -10,21 +10,6 @@
 #include <termios.h> //Contiene la terminal POSIX 
 #include <unistd.h> // write(), read(), close()
 
-unsigned short flag = 0;
-unsigned short seconds = 0;
-unsigned short minutes = 64;
-unsigned short Master = 0;
-unsigned short centerShip = 0;
-unsigned short areaX = 0;
-unsigned short areaY = 0;
-
-int ch;
-int lineTime = 1;
-
-char info[9];
-char buff_esclavo[8];
-
-
 typedef struct players{//Pos inferior izquierda de la nave
     unsigned short x;
     unsigned short y;
@@ -55,6 +40,19 @@ ships old_ship[2];
 escombro old_debris[14];
 
 unsigned short score[]={0,0};
+unsigned short flag = 0;
+unsigned short seconds = 0;
+unsigned short minutes = 64;
+unsigned short Master = 0;
+unsigned short centerShip = 0;
+unsigned short areaX = 0;
+unsigned short areaY = 0;
+
+int ch;
+int lineTime = 1;
+
+char info[9];
+char buff_esclavo[8];
 
 void init();
 void gen_debris();
@@ -149,7 +147,7 @@ int main(){
 				draw_player(ship[0].x, ship[0].y, 1);
 				draw_player(ship[1].x, ship[1].y, 1);
 				create_box(&win);
-
+				draw_time();
 				//eady();
 				
 				while(1){
@@ -162,6 +160,11 @@ int main(){
 					}
 					if(turn2 > 20){
 						turn2 = 0;
+					}
+					if(timeCount > 100000){
+						mvaddch(lineTime, 64,' ');
+						timeCount = 0;
+						lineTime += 1;
 					}
 					if(ch == KEY_DOWN){//HACIA ABAJO
 						draw_player(ship[0].x, ship[0].y, 0);//erase_player(x,  y,direction) 1 arriba / 2 abajo
@@ -225,6 +228,8 @@ int main(){
 					}
 				}
 				
+				lineTime = 0;
+				
 				if(Master == 1){//MAESTRO
 					create_box(&win);
 					while(1){
@@ -287,7 +292,7 @@ int main(){
 				if(Master == 2){//ESCLAVO
 					while(1){
 						ch = getch();
-                        //save_old_data();
+                        save_old_data();
                         
                         if(ch == KEY_DOWN){        //Mover hacia abajo
                             char msj[] = {'1'};
@@ -305,8 +310,17 @@ int main(){
 							mvaddstr(42, 0, "Enviado 0");
 						}
                         
-                        input_data(info);
-                        pos_coordinate();
+                        
+                        
+						draw_player(ship[0].x, ship[0].y, 0);
+						draw_player(ship[1].x, ship[1].y, 0);
+						
+						input_data(info);
+						pos_coordinate();
+						
+						draw_player(ship[0].x, ship[0].y, 1);
+						draw_player(ship[1].x, ship[1].y, 1);
+						
                         //desdata_pack ();
                         
                         for(counter = 0; counter < 15; counter ++){
@@ -370,31 +384,44 @@ void data_pack(){  //Funcion para empaquetar datos a enviar
     }
 }
 
+void input_data(char *text_dir){  
+        unsigned short i = 0;
+		port_config(serial_port, 8, 0);
+		n = read(serial_port, &buff_esclavo, sizeof(buff_esclavo)); // Espera a que reciba los 2 bytes
+		
+	
+        for(i = 0; i < 10; i++){
+                 if(buff_esclavo[i] == 'A'){desdata_pack(0);}
+                 else if(buff_esclavo[i] == 'B'){desdata_pack(1);}
+                 else if(buff_esclavo[i] == 'C'){desdata_pack(2);}
+        }
+}
+
 void desdata_pack(unsigned short packet_number){   // Funcion para extraer datos del paquete recibido por esclavo
     if(packet_number == 0){
-            ship[0].y   =   info[0] - '0';
-            ship[1].y   =   info[1] - '0';
-            score[0]    =   info[2] - '0';
-            score[1]    =   info[3] - '0';
-            debris[0].pos =   info[4] - '0';
-            debris[1].pos =   info[5] - '0';
-            debris[2].pos =   info[6] - '0';
+            ship[0].y   =   mapping(buff_esclavo[0] - '0')+1;
+            ship[1].y   =   mapping(buff_esclavo[1] - '0')+1;
+            score[0]    =   buff_esclavo[2] - '0';
+            score[1]    =   buff_esclavo[3] - '0';
+            debris[0].pos =   buff_esclavo[4] - '0';
+            debris[1].pos =   buff_esclavo[5] - '0';
+            debris[2].pos =   buff_esclavo[6] - '0';
     }
     else if(packet_number == 1){
-            debris[3].pos =   info[0] - '0';
-            debris[4].pos =   info[1] - '0';
-            debris[5].pos =   info[2] - '0';
-            debris[6].pos =   info[3] - '0';
-            debris[7].pos =   info[4] - '0';
-            debris[8].pos =   info[5] - '0';
-            debris[9].pos =   info[6] - '0';        
+            debris[3].pos =   buff_esclavo[0] - '0';
+            debris[4].pos =   buff_esclavo[1] - '0';
+            debris[5].pos =   buff_esclavo[2] - '0';
+            debris[6].pos =   buff_esclavo[3] - '0';
+            debris[7].pos =   buff_esclavo[4] - '0';
+            debris[8].pos =   buff_esclavo[5] - '0';
+            debris[9].pos =   buff_esclavo[6] - '0';        
     }
     else if(packet_number == 2){
-            debris[10].pos =   info[0] - '0';
-            debris[11].pos =   info[1] - '0';
-            debris[12].pos =   info[2] - '0';
-            debris[13].pos =   info[3] - '0';
-            debris[14].pos =   info[4] - '0';
+            debris[10].pos =   buff_esclavo[0] - '0';
+            debris[11].pos =   buff_esclavo[1] - '0';
+            debris[12].pos =   buff_esclavo[2] - '0';
+            debris[13].pos =   buff_esclavo[3] - '0';
+            debris[14].pos =   buff_esclavo[4] - '0';
     }
 }
 
@@ -436,6 +463,16 @@ void coordinate_pos(){
             else if(debris[i].y != 0){
                     debris[i].pos = pos_y + pos_x + 1;
             }
+    }
+}
+
+void pos_coordinate(){
+    unsigned short i = 0;
+    unsigned short j = 0;
+    
+    for(i = 0; i < 15; i++){
+        debris[i].y = debris[i].pos / 127;
+        debris[i].x = abs(debris[i].y * 127 - debris[i].pos) -1 ;//abs(debris[i].y * 127 - debris[i].pos));
     }
 }
 
@@ -492,7 +529,7 @@ void gen_debris(){
 	for(j = 0; j < 15; j++){
 			int posX = rand() % 128;
 			debris[j].dir = rand() % 2;
-			debris[j].y = posY;
+			debris[j].y = mapping(posY) + 1;
 			debris[j].x = posX;
 			posY += 3;
 	}
