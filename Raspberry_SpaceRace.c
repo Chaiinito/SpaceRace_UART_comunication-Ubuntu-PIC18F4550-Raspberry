@@ -13,6 +13,7 @@
 unsigned short flag = 0;
 unsigned short seconds = 0;
 unsigned short minutes = 64;
+unsigned short Master = 0;
 
 
 
@@ -59,6 +60,7 @@ void move_ia();
 void create_box(WIN *p_win);
 void init_win_params(WIN *p_win);
 void move_debris();
+void game_over();
 
 
 unsigned short turno= 0;
@@ -113,20 +115,20 @@ int main(){
 						if(ch == 32){ // press space to confirm
 								flag = 1;
 								break;
-							}
-							else if(ch == 50){
-								break;
-							}
+						}
+						else if(ch == 50){
+							break;
+						}
 					}
 					if(ch == 50){//MULTIPLAYER
 						port_game(3,2);
 						if(ch == 32){ // press space to confirm
 								flag = 2;
 								break;
-							}
-							else if(ch == 49){
-								break;
-							}
+						}
+						else if(ch == 49){
+							break;
+						}
 					}
 				}
 				break;
@@ -153,12 +155,12 @@ int main(){
 						turn2 = 0;
 					}
 					if(ch == KEY_DOWN){//HACIA ABAJO
-						erase_player(ship[0].x, ship[0].y, 2);//erase_player(x,  y,direction) 1 arriba / 2 abajo
+						draw_player(ship[0].x, ship[0].y, 0);//erase_player(x,  y,direction) 1 arriba / 2 abajo
 						move_player(0,2);//move_player(i, direction) 1 arriba / 2 abajo
 						draw_player(ship[0].x, ship[0].y, 1);//draw_player(x, y, color)
 					}
 					else if(ch == KEY_UP){//HACIA ARRIBA        
-						erase_player(ship[0].x, ship[0].y, 1);//erase_player(x,  y,direction) 1 arriba / 2 abajo
+						draw_player(ship[0].x, ship[0].y, 0);////erase_player(x,  y,direction) 1 arriba / 2 abajo
 						move_player(0,1);//move_player(i, direction) 1 arriba / 2 abajo
 						draw_player(ship[0].x, ship[0].y, 1);//draw_player(x, y, color)
 					}
@@ -245,12 +247,14 @@ int main(){
 						n = read(serial_port, &buffer, sizeof(buffer));
 						
 						if(buffer[0] == '2'){
-							move_players(1,0);
-							draw_player(jugador[0].x, jugador[0].y);
+							draw_player(ship[0].x, ship[0].y,0);
+							move_player(1,0);
+							draw_player(ship[0].x, ship[0].y,1);
 						}
 						else if(buffer[0] == '1'){
-							move_players(0,0);
-							draw_player(jugador[0].x, jugador[0].y);
+							draw_player(ship[0].x, ship[0].y,0);
+							move_player(0,0);
+							draw_player(ship[0].x, ship[0].y,1);
 						}
 						
 						move_debris();
@@ -259,10 +263,18 @@ int main(){
                         data_pack();
 						write(serial_port, serial_data, sizeof(serial_data));
 						
+                        if(seconds > 30){
+                            seconds = 0;
+                            minutes -=1;
+                        }
+                        if(minutes == 0){
+							game_over();
+                        }
+                        seconds ++;
+                        debris_turn ++;
+                        turno ++;
+                        turn2 ++;
 					}
-					
-					
-					
 				}
 				
 				if(Master == 2){//ESCLAVO
@@ -415,12 +427,12 @@ void move_player(unsigned short i, unsigned short direction){
 
 void draw_player(unsigned short x, unsigned short y,unsigned short color){
 	if (color == 1){
-	attron(COLOR_PAIR(1));
-	mvaddch(y, x+2, 'X');
-	mvaddch(y+1, x+2, 'X');
-	mvaddch(y+2, x+4, 'X');
-	mvaddch(y+2, x, 'X');
-	attroff(COLOR_PAIR(1));
+		attron(COLOR_PAIR(1));
+		mvaddch(y, x+2, 'X');
+		mvaddch(y+1, x+2, 'X');
+		mvaddch(y+2, x+4, 'X');
+		mvaddch(y+2, x, 'X');
+		attroff(COLOR_PAIR(1));
 	}
 	if(color == 0){
 		mvaddch(y, x+2, ' ');
@@ -440,49 +452,49 @@ int mapping(int y){
 }
 
 void move_ia(){
-        unsigned short j;
-        unsigned short p;
-        unsigned short q;
-        areaX = ship[1].x;
-        areaY = ship[1].y;
-        centerShip = ship[1].y;
+    unsigned short j;
+    unsigned short p;
+    unsigned short q;
+    areaX = ship[1].x;
+    areaY = ship[1].y;
+    centerShip = ship[1].y;
 
-        //La IA va a tener un rango en los que percibe los asteroides
-        //Si detecta un asteroide entrar, if(asteroide.x >= rango)
-        //va a ver que pos en y tiene, si esta es arriba de cierto punto va a esperar o a retroceder
-        //si es menor que este punto va a moverse hacia adelante, tener en cuenta que debe tender a
-        //moverse hacia adelante para que pueda ganar
-        //for(q = 0; q <= 5; q++){
-        if(turn2 == 1){
-                 draw_player(ship[1].x, ship[1].y, 0);
-                 move_player(1,1);
-                 draw_player(ship[1].x, ship[1].y, 1);
-        }
-        if(turno == 10){
+    //La IA va a tener un rango en los que percibe los asteroides
+    //Si detecta un asteroide entrar, if(asteroide.x >= rango)
+    //va a ver que pos en y tiene, si esta es arriba de cierto punto va a esperar o a retroceder
+    //si es menor que este punto va a moverse hacia adelante, tener en cuenta que debe tender a
+    //moverse hacia adelante para que pueda ganar
+    //for(q = 0; q <= 5; q++){
+    if(turn2 == 1){
+             draw_player(ship[1].x, ship[1].y, 0);
+             move_player(1,1);
+             draw_player(ship[1].x, ship[1].y, 1);
+    }
+    if(turno == 10){
 
-            areaX = areaX - 10;
-            areaY = areaY - 4;
-            for (j = 0; j <= 14; j++){
-                if((debris[j].x >= areaX) && (debris[j].x <= ship[1].x + 10)){
-                    if((debris[j].y >= areaY) && (debris[j].y <= ship[1].y + 6)){
-                        if(debris[j].y <= centerShip){
-                            //mover hacia arriba
-                            draw_player(ship[1].x, ship[1].y, 0);
-                            move_player(1,2);
-                            draw_player(ship[1].x, ship[1].y, 1);
-                            //Glcd_H_Line(ship[1].x-2,ship[1].x+6,ship[1].y+7,0);
-                        }
-                        else if(debris[j].y > centerShip){
-                            //mover hacia abajo
-                            draw_player(ship[1].x, ship[1].y, 0);
-                            move_player(1,1);
-                            draw_player(ship[1].x, ship[1].y, 1);
-                            //Glcd_H_Line(ship[1].x-2,ship[1].x+6,ship[1].y+7,0);
-                        }
+        areaX = areaX - 10;
+        areaY = areaY - 4;
+        for (j = 0; j <= 14; j++){
+            if((debris[j].x >= areaX) && (debris[j].x <= ship[1].x + 10)){
+                if((debris[j].y >= areaY) && (debris[j].y <= ship[1].y + 6)){
+                    if(debris[j].y <= centerShip){
+                        //mover hacia arriba
+                        draw_player(ship[1].x, ship[1].y, 0);
+                        move_player(1,2);
+                        draw_player(ship[1].x, ship[1].y, 1);
+                        //Glcd_H_Line(ship[1].x-2,ship[1].x+6,ship[1].y+7,0);
+                    }
+                    else if(debris[j].y > centerShip){
+                        //mover hacia abajo
+                        draw_player(ship[1].x, ship[1].y, 0);
+                        move_player(1,1);
+                        draw_player(ship[1].x, ship[1].y, 1);
+                        //Glcd_H_Line(ship[1].x-2,ship[1].x+6,ship[1].y+7,0);
                     }
                 }
             }
         }
+    }
 }
 
 void port_config(int serial_port1, int vmin, int vtime){
@@ -534,4 +546,36 @@ void port_config(int serial_port1, int vmin, int vtime){
 	if(tcsetattr(serial_port1, TCSANOW, &tty) != 0 ){
 		printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
 	}
+}
+
+void game_over(){
+        if(score[0] > score[1]){
+            mvaddstr(16 ,54, "YOU WIN !!! ");
+			ch = getch();
+            while(1){
+                if(ch == 32){ //Quiero volver a la portada como si acabara de encender la consola
+					break;
+                }
+            }
+        }
+        else if(score[0] < score[1]){
+            mvaddstr(16 ,54, "PC WIN !!! ");
+			ch = getch();
+
+            while(1){
+                if(ch == 32){ //Quiero volver a la portada como si acabara de encender la consola
+					break;
+                }
+            }
+        }
+        else if(score[0] == score[1]){
+            mvaddstr(16 ,54, "TIE !!! ");
+			ch = getch();
+
+            while(1){
+                 if(ch == 32){ //Quiero volver a la portada como si acabara de encender la consola
+                    break;
+                }
+            }
+        }        
 }
