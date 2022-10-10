@@ -14,7 +14,11 @@ unsigned short flag = 0;
 unsigned short seconds = 0;
 unsigned short minutes = 64;
 unsigned short Master = 0;
+unsigned short centerShip = 0;
+unsigned short areaX = 0;
+unsigned short areaY = 0;
 
+char info[9];
 
 
 typedef struct players{//Pos inferior izquierda de la nave
@@ -61,6 +65,9 @@ void create_box(WIN *p_win);
 void init_win_params(WIN *p_win);
 void move_debris();
 void game_over();
+void portada();
+void data_pack();
+void desdata_pack(unsigned short packet_number);
 
 
 unsigned short turno= 0;
@@ -134,7 +141,6 @@ int main(){
 				break;
 				
 			case 1:
-				init_counts();
 				gen_debris();
 				init();
 				draw_player(ship[0].x, ship[0].y, 1);
@@ -261,7 +267,7 @@ int main(){
                         draw_time();
                         coordinate_pos();
                         data_pack();
-						write(serial_port, serial_data, sizeof(serial_data));
+						write(serial_port, info, sizeof(info));
 						
                         if(seconds > 30){
                             seconds = 0;
@@ -283,6 +289,73 @@ int main(){
 		}
 	}
 }
+void data_pack(){  //Funcion para empaquetar datos a enviar     
+    //INFO DE BOLA //
+    unsigned short i = 0;
+    for(i = 0; i <= 2; i++){
+        if(i == 0){
+            info[0] = ship[0].y + '0';
+            info[1] = ship[1].y + '0';
+            info[2] = score[0] + '0';
+            info[3] = score[1] + '0';
+            info[4] = debris[0].pos + '0';  
+            info[5] = debris[1].pos + '0';
+            info[6] = debris[2].pos + '0';
+            info[7] = 'A';
+            info[8] = 'P';        
+        }
+        else if(i == 1){
+            info[0] = debris[3].pos + '0';
+            info[1] = debris[4].pos + '0';
+            info[2] = debris[5].pos + '0';
+            info[3] = debris[6].pos + '0';
+            info[4] = debris[7].pos + '0';
+            info[5] = debris[8].pos + '0';
+            info[6] = debris[9].pos + '0';
+            info[7] = 'B';
+            info[8] = 'P';
+        }
+        else if(i == 2){
+            info[0] = debris[10].pos + '0';
+            info[1] = debris[11].pos + '0';
+            info[2] = debris[12].pos + '0';
+            info[3] = debris[13].pos + '0';
+            info[4] = debris[14].pos + '0';
+            info[6] ='C';
+            info[7] = 'P';
+            info[8] = 0;
+            info[8] = 0;
+        }
+    }
+}
+
+void desdata_pack(unsigned short packet_number){   // Funcion para extraer datos del paquete recibido por esclavo
+    if(packet_number == 0){
+            ship[0].y   =   info[0] - '0';
+            ship[1].y   =   info[1] - '0';
+            score[0]    =   info[2] - '0';
+            score[1]    =   info[3] - '0';
+            debris[0].pos =   info[4] - '0';
+            debris[1].pos =   info[5] - '0';
+            debris[2].pos =   info[6] - '0';
+    }
+    else if(packet_number == 1){
+            debris[3].pos =   info[0] - '0';
+            debris[4].pos =   info[1] - '0';
+            debris[5].pos =   info[2] - '0';
+            debris[6].pos =   info[3] - '0';
+            debris[7].pos =   info[4] - '0';
+            debris[8].pos =   info[5] - '0';
+            debris[9].pos =   info[6] - '0';        
+    }
+    else if(packet_number == 2){
+            debris[10].pos =   info[0] - '0';
+            debris[11].pos =   info[1] - '0';
+            debris[12].pos =   info[2] - '0';
+            debris[13].pos =   info[3] - '0';
+            debris[14].pos =   info[4] - '0';
+    }
+}
 
 void init(){
 	
@@ -294,10 +367,11 @@ void init(){
 	
 	score[0] = 0;
 	score[1] = 0;
-    //debris.x = 64;
-    //debris.y = 32;
-    //debris[].dx = 2;
-    //gen_debris();
+	
+	count = 0;
+	count1 = 0;
+	score[0] = 0;
+	score[1] = 0;
 }
 
 void move_debris(){
@@ -330,7 +404,7 @@ void move_debris(){
                     //Si un asteriode choca con una nave
                     for(i = 0; i < 2; i++){
                             if((debris[j].y <= ship[i].y) && (debris[j].y >= ship[i].y + 3) && (debris[j].x >= ship[i].x) && (debris[j].x <= ship[i].x + 6)){
-                                    draw_player(ship[i].x, ship[i].y);
+                                    draw_player(ship[i].x, ship[i].y,0);
 									
                                     if(i == 0){
                                             ship[i].x = 40;
@@ -406,7 +480,7 @@ void move_player(unsigned short i, unsigned short direction){
                 }
                 else if(direction == 1){//hacia arriba
                         if(ship[i].y <= 0){
-								draw_player(ship[i].x,ship[i].y);
+								draw_player(ship[i].x,ship[i].y,0);
 								//Glcd_H_Line(ship[i].x-2,ship[i].x+6,ship[i].y+6,0);
                                 score[i] += 1;
 								if(i == 0){
@@ -546,6 +620,27 @@ void port_config(int serial_port1, int vmin, int vtime){
 	if(tcsetattr(serial_port1, TCSANOW, &tty) != 0 ){
 		printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
 	}
+}
+
+void portada(){
+	attron(COLOR_PAIR(5));
+	mvaddstr(2, 140, "####  #####   ###    ###  #### ");
+	mvaddstr(3, 140, "#     #   #  #   #  #     #    ");
+	mvaddstr(4, 140, "####  #####  #####  #     ###  ");
+	mvaddstr(5, 140, "   #  #      #   #  #     #    ");
+	mvaddstr(6, 140, "####  #      #   #   ###  #### ");
+
+	mvaddstr(8, 145, "####  ###   ### #### ");
+	mvaddstr(9, 145, "#  # #   # #    #    ");
+	mvaddstr(10,145, "###  ##### #    ##   ");
+	mvaddstr(11,145, "#  # #   #  ### #### ");
+
+	mvaddstr(13, 140, "Andrey Sequeira Ruiz");
+	mvaddstr(15, 140, "Erick Quiros Zeledon");
+	mvaddstr(17, 140, "Prof. Ernesto Rivera");
+	mvaddstr(19, 140, "Taller de Sistemas Embebidos");
+
+	attroff(COLOR_PAIR(5));
 }
 
 void game_over(){
