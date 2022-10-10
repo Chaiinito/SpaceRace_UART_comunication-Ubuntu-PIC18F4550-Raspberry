@@ -11,6 +11,9 @@
 #include <unistd.h> // write(), read(), close()
 
 unsigned short flag = 0;
+unsigned short seconds = 0;
+unsigned short minutes = 64;
+
 
 
 typedef struct players{//Pos inferior izquierda de la nave
@@ -53,6 +56,10 @@ void move_player(unsigned short i, unsigned short direction);
 void draw_player(unsigned short x, unsigned short y, unsigned short color);
 int mapping(int y);
 void move_ia();
+void create_box(WIN *p_win);
+void init_win_params(WIN *p_win);
+void move_debris();
+
 
 unsigned short turno= 0;
 unsigned short debris_turn = 0;
@@ -101,7 +108,7 @@ int main(){
 				
 				while(1){
 					ch = getch();
-					if(ch == 49){
+					if(ch == 49){//SINGLEPLAYER
 						port_game(3,1);
 						if(ch == 32){ // press space to confirm
 								flag = 1;
@@ -111,10 +118,10 @@ int main(){
 								break;
 							}
 					}
-					if(ch == 50){
+					if(ch == 50){//MULTIPLAYER
 						port_game(3,2);
 						if(ch == 32){ // press space to confirm
-								flag = 1;
+								flag = 2;
 								break;
 							}
 							else if(ch == 49){
@@ -128,10 +135,11 @@ int main(){
 				init_counts();
 				gen_debris();
 				init();
-				
+				draw_player(ship[0].x, ship[0].y, 1);
+				draw_player(ship[1].x, ship[1].y, 1);
 				create_box(&win);
 
-				ready();
+				//eady();
 				
 				while(1){
 					ch = getch();
@@ -175,26 +183,155 @@ int main(){
 				break;
 			
 			case 2:
+				init();
+				memset(&buffer, '\0', sizeof(buffer));
+				memset(&buff_esclavo, '\0', sizeof(buff_esclavo));
+				
+				port_config(serial_port, 0, 1);
+				n = read(serial_port, &buffer, sizeof(buffer));
+				
+				if(n == 0){
+					mvaddstr(40, 0, "Waiting for other player");
+					char msj[] = {'1'};
+					write(serial_port, msj, sizeof(msj));
+				}
+				else if (n!= 0 && buffer[0] == '1'){
+					mvaddstr(40, 0, "Device connected. Press space to start");
+					while(1){
+						ch = getch();
+						char msj[] = {'3'};
+						
+						if(ch == 32){
+							Master = 1;
+							write(serial_port, msj, sizeof(msj));
+							break;
+						}
+						
+						if(buffer[0] == '3'){
+							Master = 2;
+							break;
+						}
+					}
+				}
+				
+				
+				
+				if(Master == 1){//MAESTRO
+					create_box(&win);
+					while(1){
+						ch = getch();
+						if(debris_turn > 10){
+                            debris_turn = 0;
+                        }
+                        if(turno > 10){
+                            turno = 0;
+                        }
+                        if(turn2 == 9){
+                            turn2 = 0;
+                        }
+						if(ch == KEY_UP){
+							draw_player(ship[0].x, ship[0].y,0); 
+                            move_player(0,1);//1 hacia arriba
+                            draw_player(ship[0].x, ship[0].y,1);
+						}
+						
+						if(ch == KEY_DOWN){
+							draw_player(ship[0].x, ship[0].y,0); 
+                            move_player(0,2);//2 hacia abajo
+                            draw_player(ship[0].x, ship[0].y,1);
+						}
+						
+						port_config(serial_port, 1, 0);
+						n = read(serial_port, &buffer, sizeof(buffer));
+						
+						if(buffer[0] == '2'){
+							move_players(1,0);
+							draw_player(jugador[0].x, jugador[0].y);
+						}
+						else if(buffer[0] == '1'){
+							move_players(0,0);
+							draw_player(jugador[0].x, jugador[0].y);
+						}
+						
+						move_debris();
+                        draw_time();
+                        coordinate_pos();
+                        data_pack();
+						write(serial_port, serial_data, sizeof(serial_data));
+						
+					}
+					
+					
+					
+				}
+				
+				if(Master == 2){//ESCLAVO
+					
+				}
 		}
 	}
-	
-	
 }
 
 void init(){
+	
     ship[0].x = 40;
     ship[0].y = mapping(59) + 1;
 
     ship[1].x = 70;
     ship[1].y = mapping(59) + 1;;
-
+	
+	score[0] = 0;
+	score[1] = 0;
     //debris.x = 64;
     //debris.y = 32;
     //debris[].dx = 2;
-
-    draw_player(ship[0].x, ship[0].y, 1);
-    draw_player(ship[1].x, ship[1].y, 1);
     //gen_debris();
+}
+
+void move_debris(){
+    unsigned short i; //variable para la colision
+    unsigned short j;//variable para controlar los asteroides
+    
+    if(debris_turn == 8000){
+            for(j = 0; j <= 14; j++){
+                    if(debris[j].dir == 1){//asteroide moviendose de derecha a izquierda   <--
+                            
+							mvaddch(debris[i].y, debris[i].x, ' ');
+							debris[j].x -= 2;
+							mvaddch(debris[i].y, debris[i].x, '*');
+							
+                            if(debris[j].x <= 0){
+								mvaddch(debris[i].y, debris[i].x, ' ');
+                                debris[j].x = 128;
+                            }
+                    }
+                    else if(debris[j].dir == 0){//asteroide moviendose de izquierda a derecha -->
+                            mvaddch(debris[i].y, debris[i].x, ' ');
+							debris[j].x += 2;
+							mvaddch(debris[i].y, debris[i].x, '*');
+                            if(debris[j].x >= 128){
+								mvaddch(debris[i].y, debris[i].x, ' ');
+                                debris[j].x = 0;
+                            } 
+                    }
+                    
+                    //Si un asteriode choca con una nave
+                    for(i = 0; i < 2; i++){
+                            if((debris[j].y <= ship[i].y) && (debris[j].y >= ship[i].y + 3) && (debris[j].x >= ship[i].x) && (debris[j].x <= ship[i].x + 6)){
+                                    draw_player(ship[i].x, ship[i].y);
+									
+                                    if(i == 0){
+                                            ship[i].x = 40;
+                                            ship[i].y = 60;
+                                    }
+                                    else if(i == 1){
+                                            ship[i].x = 70;
+                                            ship[i].y = 60;
+                                    }
+                            }
+                    }
+            }
+    }        
 }
 
 void gen_debris(){
@@ -285,7 +422,7 @@ void draw_player(unsigned short x, unsigned short y,unsigned short color){
 	mvaddch(y+2, x, 'X');
 	attroff(COLOR_PAIR(1));
 	}
-	if(color ==0){
+	if(color == 0){
 		mvaddch(y, x+2, ' ');
 		mvaddch(y+1, x+2, ' ');
 		mvaddch(y+2, x+4, ' ');
@@ -346,4 +483,55 @@ void move_ia(){
                 }
             }
         }
+}
+
+void port_config(int serial_port1, int vmin, int vtime){
+
+
+	// Configuracion del puerto se realiza a traves de termios//
+	struct termios tty;
+
+	if(tcgetattr(serial_port1, &tty) != 0){  // Para extraer configuraccion del puerto seria actual y guardar en struct tty
+		printf("Error %i from tcgetattr: %s\n", errno, strerror(errno));
+	}
+
+	// CONFIG DE BAUDIOS //
+	cfsetispeed(&tty, B9600);
+	cfsetospeed(&tty, B9600);
+
+
+	// MODOS DE CONTROL //
+	tty.c_cflag &= ~PARENB; // deshabilita el bit de paridad;
+	tty.c_cflag &= ~CSTOPB; // Borra bit de parada y Establece unicamente un bit de parada
+	tty.c_cflag &= ~CSIZE;  // Limpia todos los bits de tamano
+	tty.c_cflag |= CS8;		// Establece una comunicacion de 8 bits por Byte
+	tty.c_cflag &= ~CRTSCTS; // Deshabilita el control de flujo por hardware
+	tty.c_cflag |= CREAD | CLOCAL; // Enciende READ e ignora las lineas de control
+
+	// MODOS LOCALES //
+	tty.c_lflag &= ~ICANON; // Deshabilita el modo canonico (Que es que la entrada se procesa cuando se recibe char de nueva linea)
+	tty.c_lflag &= ~ECHO;   // Desahabilita el eco
+	tty.c_lflag &= ~ECHOE;
+	tty.c_lflag &= ~ECHONL;
+	tty.c_lflag &= ~ISIG;   // Deshabilitar caracter de senal
+
+	// MODOS DE ENTRADA //
+	tty.c_iflag &= ~(IXON | IXOFF | IXANY); //Deshabilita el control de flujo por software
+	tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL); //Deshabilita el manejo especial de bytes
+
+	//MODOS DE SALIDA //
+	tty.c_oflag &= ~OPOST; //Desactiva el porcesamiento especial lde bytes de salida
+	tty.c_oflag &= ~ONLCR;
+
+	// Configuracion de bloqueos y esperas de lecturas //
+	tty.c_cc[VTIME] = vtime; 
+	tty.c_cc[VMIN] = vmin;
+
+	// CAMBIAR ESTO POR VMIN>0 Y VTIME = 0 //
+	/*Lo anterior para hacer que read espere a tener la cantidad de bytes especificados por 
+	  VMIN, sin tiempo de espera */
+
+	if(tcsetattr(serial_port1, TCSANOW, &tty) != 0 ){
+		printf("Error %i from tcsetattr: %s\n", errno, strerror(errno));
+	}
 }
