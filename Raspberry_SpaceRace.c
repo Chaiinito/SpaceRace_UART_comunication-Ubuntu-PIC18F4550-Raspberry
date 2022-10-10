@@ -753,6 +753,7 @@ void portada(){
 }
 
 void game_over(){
+	
         if(score[0] > score[1]){
             mvaddstr(16 ,54, "YOU WIN !!! ");
 			ch = getch();
@@ -782,4 +783,25 @@ void game_over(){
                 }
             }
         }        
+}
+
+void create_box(WIN *p_win){   
+	int i, j;
+    int x, y, w, h;
+
+    x = p_win->startx;
+    y = p_win->starty;
+    w = p_win->width;
+    h = p_win->height;
+
+    mvaddch(y, x, p_win->border.tl);
+    mvaddch(y, x + w, p_win->border.tr);
+    mvaddch(y + h, x, p_win->border.bl);
+    mvaddch(y + h, x + w, p_win->border.br);
+    mvhline(y, x + 1, p_win->border.ts, w - 1);
+    mvhline(y + h, x + 1, p_win->border.bs, w - 1);
+    mvvline(y + 1, x, p_win->border.ls, h - 1);
+    mvvline(y + 1, x + w, p_win->border.rs, h - 1);
+                
+    refresh();
 }
