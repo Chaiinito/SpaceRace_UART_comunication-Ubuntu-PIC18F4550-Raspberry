@@ -112,6 +112,10 @@ void create_box(window *pointer_window);
 
 int main(){
 
+	initscr();
+	start_color();
+	cbreak(); // Para leer caracteres de forma continua
+
 	init_pair(1, COLOR_RED, COLOR_BLACK);
 	init_pair(2, COLOR_CYAN, COLOR_BLACK);
 	init_pair(3, COLOR_CYAN, COLOR_WHITE);
@@ -122,12 +126,13 @@ int main(){
 	window win;
 	int ch;
 	
-	//keypad(stdscr, TRUE);
+	
+	init_window_p(&win);
+	keypad(stdscr, TRUE);
 	noecho();    // No mostrar en terminal la tecla utilizada
 	curs_set(0); // Ocultar curisor
 	timeout(0);  // Sin bloqueo en espera de entradas
 	
-	init_window_p(&win);
 	create_box(&win);
 	portada();
 }
