@@ -18,7 +18,11 @@ unsigned short centerShip = 0;
 unsigned short areaX = 0;
 unsigned short areaY = 0;
 
+int ch;
+int lineTime = 1;
+
 char info[9];
+char buff_esclavo[8];
 
 
 typedef struct players{//Pos inferior izquierda de la nave
@@ -50,8 +54,6 @@ escombro debris[14];
 ships old_ship[2];
 escombro old_debris[14];
 
-char info[9];
-
 unsigned short score[]={0,0};
 
 void init();
@@ -68,13 +70,14 @@ void game_over();
 void portada();
 void data_pack();
 void desdata_pack(unsigned short packet_number);
-
+void coordinate_pos();
+void save_old_data();
+void port_config(int serial_port1, int vmin, int vtime);
+void draw_time();
 
 unsigned short turno= 0;
 unsigned short debris_turn = 0;
 unsigned short turn2 = 0;
-
-
 
 int main(){
 	
@@ -222,8 +225,6 @@ int main(){
 					}
 				}
 				
-				
-				
 				if(Master == 1){//MAESTRO
 					create_box(&win);
 					while(1){
@@ -284,8 +285,48 @@ int main(){
 				}
 				
 				if(Master == 2){//ESCLAVO
-					
+					while(1){
+						ch = getch();
+                        //save_old_data();
+                        
+                        if(ch == KEY_DOWN){        //Mover hacia abajo
+                            char msj[] = {'1'};
+							write(serial_port, msj, sizeof(msj));
+							mvaddstr(42, 0, "Enviado 1");
+                        }
+                        else if(ch == KEY_UP){         //Mover hacia arriba
+                            char msj[] = {'2'};
+							write(serial_port, msj, sizeof(msj));
+							mvaddstr(42, 0, "Enviado 2");
+                        }
+                        else{
+							char msj[] = {'0'};
+							write(serial_port, msj, sizeof(msj));
+							mvaddstr(42, 0, "Enviado 0");
+						}
+                        
+                        input_data(info);
+                        pos_coordinate();
+                        //desdata_pack ();
+                        
+                        for(counter = 0; counter < 15; counter ++){
+                                if(old_debris[counter].x != debris[counter].x || old_debris[counter].y != debris[counter].y){
+                                    mvaddstr(old_debris[counter].x, old_debris[counter].y, '*');
+                                }
+                                mvaddstr(debris[counter].x, debris[counter].y, '*');
+                        }
+						
+                        for(counter2 = 0; counter2 < 2; counter2 ++){
+                                if(old_ship[counter2].y != ship[counter2].y){
+									draw_player(old_ship[counter2].x, old_ship[counter2].y,0);
+                                }
+                                draw_player(ship[counter2].x, ship[counter2].y,1);
+                        }
+                        draw_time();
+					}
 				}
+				close(serial_port);
+				break;
 		}
 	}
 }
@@ -357,6 +398,18 @@ void desdata_pack(unsigned short packet_number){   // Funcion para extraer datos
     }
 }
 
+void save_old_data(){
+    unsigned short i = 0;
+    old_ship[0].y = ship[0].y;
+    old_ship[1].y = ship[1].y;
+    for(i = 0; i < 15; i++){
+        old_debris[i].x = debris[i].x;
+        old_debris[i].y = debris[i].y;
+        old_debris[i].dx = debris[i].dx;
+        old_debris[i].dir = debris[i].dir;
+    }
+}
+
 void init(){
 	
     ship[0].x = 40;
@@ -367,11 +420,23 @@ void init(){
 	
 	score[0] = 0;
 	score[1] = 0;
-	
-	count = 0;
-	count1 = 0;
-	score[0] = 0;
-	score[1] = 0;
+}
+
+void coordinate_pos(){
+    unsigned short i = 0;
+    unsigned short pos_y = 0;
+    unsigned short pos_x = 0;
+    
+    for(i = 0; i < 15; i++){
+            pos_y = debris[i].y * 127;
+            pos_x = debris[i].x;
+            if (debris[i].y == 0){
+                    debris[i].pos = debris[i].x;
+            }
+            else if(debris[i].y != 0){
+                    debris[i].pos = pos_y + pos_x + 1;
+            }
+    }
 }
 
 void move_debris(){
@@ -515,6 +580,13 @@ void draw_player(unsigned short x, unsigned short y,unsigned short color){
 		mvaddch(y+2, x, ' ');
 	}
 	
+}
+
+void draw_time(){
+       unsigned short i = lineTime;
+       for(i ; i< mapeo(64) ; i++){
+            mvaddch(i, 64,'|');
+       }
 }
 
 int mapping(int y){
