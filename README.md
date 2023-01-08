@@ -12,18 +12,21 @@ toma de desiciones variando de la ubicacion y direccion de los asteriodes que de
 
 En orden de correr el juego en Ubuntu o Raspbian, se deben seguir los siguientes pasos:
   1. Descargar el archivo correspondiente al sistema operativo en el que se va a correr.
+ - [Ubuntu_Space_Race](https://github.com/Chaiinito/SpaceRace_tallerEmpotrados/tree/main/Ubuntu_Space_Race)
+ - [Raspberry_Space_Race](https://github.com/Chaiinito/SpaceRace_tallerEmpotrados/tree/main/Raspberry_Space_Race)
   2. Abrir la terminal y ubicarse en el directorio que se descargó recientemente.
   3. Escribir los siguientes comandos:
       ### Para correr en raspbian
-        - `gcc -o Raspberry_SpaceRace.c` 
-        - `./Raspberry_SpaceRace.c`
+        - `gcc -o Rasp_Space_exe Raasp_Space.c` 
+        - `.Rasp_Space_exe`
         
       ### Para correr en Ubuntu
-        - `gcc -o Ubuntu_SpaceRace.c` 
-        - `./Ubuntu_SpaceRace.c` 
+        - `gcc -o Ubuntu_Space_exe Ubuntu_Space.c` 
+        - `./Ubuntu_Space_exe` 
         
       ### Para correr en el PIC18F4550
-        -Se debe descargar la carpeta (PIC_Space_Race) []
+        - Se debe descargar la carpeta [PIC_Space_Race](https://github.com/Chaiinito/SpaceRace_tallerEmpotrados/tree/main/PIC18F4550)
+        - Cargar el archivo al PIC
 
 Las conexiones alcanzadas son:
   - PIC18F4550 <-> Ubuntu
