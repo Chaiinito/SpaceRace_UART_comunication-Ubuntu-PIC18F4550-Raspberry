@@ -18,7 +18,7 @@ En orden de correr el juego en Ubuntu o Raspbian, se deben seguir los siguientes
   3. Escribir los siguientes comandos:
       ### Para correr en raspbian
         - `gcc -o Rasp_Space_exe Rasp_Space.c` 
-        - `.Rasp_Space_exe`
+        - `./Rasp_Space_exe`
         
       ### Para correr en Ubuntu
         - `gcc -o Ubuntu_Space_exe Ubuntu_Space.c` 
@@ -56,10 +56,10 @@ In order to run the game on Ubuntu or Raspbian, the following steps must be foll
   3. Type the following commands:
       ### To run on raspbian
         - `gcc -o Rasp_Space_exe Rasp_Space.c` 
-        - `.Rasp_Space_exe`.
+        - `./Rasp_Space_exe`.
         
       ### To run on Ubuntu
-        - `gcc -o Ubuntu_Space_exe Ubuntu_Space.c` `./Ubuntu_Space_exe `. 
+        - `gcc -o Ubuntu_Space_exe Ubuntu_Space.c` 
         - `./Ubuntu_Space_exe` 
         
       ### To run on the PIC18F4550
